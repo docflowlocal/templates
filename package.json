@@ -1,0 +1,25 @@
+{
+  "name": "@docflow-local/templates-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "license": "CC-BY-4.0",
+  "scripts": {
+    "build": "node scripts/build-starters.js",
+    "test": "node scripts/validate-content.js"
+  },
+  "dependencies": {
+    "@docflow-local/core": "^0.1.0",
+    "pizzip": "^3.2.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "homepage": "https://github.com/docflowlocal/templates#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/docflowlocal/templates.git"
+  },
+  "bugs": {
+    "url": "https://github.com/docflowlocal/templates/issues"
+  }
+}
