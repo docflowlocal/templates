@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: project
+      - name: Check out reviewed DocFlow packages
+        uses: actions/checkout@v7
+        with:
+          repository: docflowlocal/docflow
+          ref: d49835883200da227d643745d5a46dec0807f338
+          path: docflow-source
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Pack reviewed public dependencies
+        working-directory: docflow-source
+        run: |
+          mkdir -p "$RUNNER_TEMP/docflow-packages"
+          npm pack ./packages/contracts --ignore-scripts --pack-destination "$RUNNER_TEMP/docflow-packages"
+          npm pack ./packages/core --ignore-scripts --pack-destination "$RUNNER_TEMP/docflow-packages"
+      - name: Verify reviewed dependency versions
+        working-directory: project
+        run: node -e "const expected={\"@docflow-local/contracts\":\"0.1.0\",\"@docflow-local/core\":\"0.1.0\"};const packageJson=require(\"./package.json\");for(const [name,version] of Object.entries(expected)){const actual=packageJson.dependencies?.[name];if(actual!==version){throw new Error(name+\" must equal reviewed package version \"+version+\" (found \"+actual+\")\");}}"
+      - name: Install dependencies from reviewed tarballs
+        working-directory: project
+        run: npm install --ignore-scripts --save-exact --package-lock=true "$RUNNER_TEMP/docflow-packages/docflow-local-contracts-0.1.0.tgz" "$RUNNER_TEMP/docflow-packages/docflow-local-core-0.1.0.tgz"
+      - name: Verify installed dependency tree
+        working-directory: project
+        run: npm ls --all
+      - name: Audit production and build dependencies
+        run: npm audit --audit-level=high
+        working-directory: project
+      - name: Restore reviewed package metadata
+        working-directory: project
+        run: |
+          git checkout -- package.json
+          rm -f package-lock.json
+      - run: npm test
+        working-directory: project
